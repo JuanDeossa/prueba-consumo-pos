@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -32,6 +29,7 @@ model User {
   deleted_by String?
   is_active  Boolean   @default(true)
   Session    Session[]
+  Order      Order[] // Relación con las órdenes realizadas por el usuario
 
   @@index([email])
 }
@@ -46,4 +44,45 @@ model Session {
   access_token  String   @unique
   user          User     @relation(fields: [user_id], references: [id])
   user_id       String
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int         @default(0) // Cantidad de productos disponibles
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  is_active   Boolean     @default(true)
+  OrderItem   OrderItem[] // Relación con los ítems de la orden
+
+  @@index([name])
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  total      Float
+  status     OrderStatus @default(PENDING)
+  user       User        @relation(fields: [user_id], references: [id])
+  user_id    String
+  OrderItem  OrderItem[] // Relación con los ítems de la orden
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  quantity   Int     @default(1)
+  price      Float // Precio del producto en el momento de la compra
+  order      Order   @relation(fields: [order_id], references: [id])
+  order_id   String
+  product    Product @relation(fields: [product_id], references: [id])
+  product_id String
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELED
 }
